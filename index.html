@@ -638,7 +638,17 @@
         <div class="viewer-bar-sub">A1 Smog Center &mdash; Confidential Proposal</div>
       </div>
     </div>
-    <div class="viewer-badge">NDA Signed</div>
+    <div class="viewer-bar-actions" style="display:flex; align-items:center; gap:10px;">
+      <button id="download-pdf-btn" onclick="downloadProposalPDF()" style="
+        background:transparent; color:#3D9DB3; border:1.5px solid #3D9DB3; border-radius:6px;
+        padding:6px 13px; font-size:11px; font-weight:700; letter-spacing:0.5px;
+        cursor:pointer; white-space:nowrap;">Download PDF</button>
+      <button id="open-newtab-btn" onclick="openInNewTab()" style="
+        background:#3D9DB3; color:#fff; border:none; border-radius:6px;
+        padding:7px 14px; font-size:11px; font-weight:700; letter-spacing:0.5px;
+        cursor:pointer; white-space:nowrap;">Open in New Tab</button>
+      <div class="viewer-badge">NDA Signed</div>
+    </div>
   </div>
   <iframe id="pdf-frame" title="Proposal"></iframe>
   <div class="viewer-footer">
@@ -990,6 +1000,30 @@ function goBack() {
   window.scrollTo(0, 0);
 }
 
+let pdfBlobUrl = null;
+let pdfBlobObj = null;
+
+function openInNewTab() {
+  if (pdfBlobUrl) {
+    window.open(pdfBlobUrl, '_blank');
+  }
+}
+
+function downloadProposalPDF() {
+  if (!pdfBlobObj) return;
+  const name = document.getElementById('rv-name').textContent || 'Client';
+  const safeName = name.replace(/[^a-zA-Z0-9]/g, '_');
+  const a = document.createElement('a');
+  const url = URL.createObjectURL(pdfBlobObj);
+  a.href = url;
+  a.download = 'A1_Smog_Center_Proposal_MUSO_VENTURES.pdf';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // Revoke shortly after to let the download start (iOS Safari needs a beat)
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+}
+
 async function openProposal() {
   const btn  = document.getElementById('confirm-btn');
   btn.textContent = 'Opening…';
@@ -1002,7 +1036,9 @@ async function openProposal() {
   const arr    = new Uint8Array(bytes.length);
   for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
   const blob = new Blob([arr], {type: 'application/pdf'});
-  frame.src  = URL.createObjectURL(blob) + '#toolbar=0&navpanes=0&scrollbar=1&view=FitH';
+  pdfBlobUrl = URL.createObjectURL(blob);
+  pdfBlobObj = blob;
+  frame.src  = pdfBlobUrl + '#toolbar=0&navpanes=0&scrollbar=1&view=FitH';
   document.getElementById('review').style.display = 'none';
   viewer.style.display = 'flex';
   document.body.style.padding = '0';
