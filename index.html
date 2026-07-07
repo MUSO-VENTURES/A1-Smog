@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -651,6 +650,23 @@
     </div>
   </div>
   <iframe id="pdf-frame" title="Proposal"></iframe>
+
+  <!-- iOS fallback: shown instead of the iframe on iPhone/iPad -->
+  <div id="ios-fallback" style="display:none; flex:1; flex-direction:column; align-items:center; justify-content:center; padding:40px 24px; text-align:center;">
+    <div style="font-size:15px; font-weight:700; letter-spacing:2px; color:#3D9DB3; text-transform:uppercase; margin-bottom:10px;">Your Proposal Is Ready</div>
+    <p style="font-size:14px; color:rgba(255,255,255,0.75); line-height:1.6; max-width:420px; margin-bottom:32px;">
+      Thanks for signing. Tap a button below to view or save the proposal — Safari on iPad opens PDFs best in a full tab.
+    </p>
+    <button onclick="openInNewTab()" style="
+      background:#3D9DB3; color:#fff; border:none; border-radius:10px;
+      padding:16px 32px; font-size:15px; font-weight:700; letter-spacing:0.5px;
+      cursor:pointer; width:100%; max-width:340px; margin-bottom:14px;">Open Proposal &rarr;</button>
+    <button onclick="downloadProposalPDF()" style="
+      background:transparent; color:#3D9DB3; border:2px solid #3D9DB3; border-radius:10px;
+      padding:15px 32px; font-size:15px; font-weight:700; letter-spacing:0.5px;
+      cursor:pointer; width:100%; max-width:340px;">Download PDF</button>
+  </div>
+
   <div class="viewer-footer">
     <span>MUSO VENTURES LLC &middot; CONFIDENTIAL &middot; NDA PROTECTED</span>
     <span id="viewer-signer"></span>
@@ -1038,7 +1054,19 @@ async function openProposal() {
   const blob = new Blob([arr], {type: 'application/pdf'});
   pdfBlobUrl = URL.createObjectURL(blob);
   pdfBlobObj = blob;
-  frame.src  = pdfBlobUrl + '#toolbar=0&navpanes=0&scrollbar=1&view=FitH';
+
+  // iOS/iPadOS: Safari renders blob PDFs in iframes as blank pages,
+  // so show a fallback screen with Open / Download buttons instead.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  if (isIOS) {
+    frame.style.display = 'none';
+    document.getElementById('ios-fallback').style.display = 'flex';
+  } else {
+    frame.src = pdfBlobUrl + '#toolbar=0&navpanes=0&scrollbar=1&view=FitH';
+  }
+
   document.getElementById('review').style.display = 'none';
   viewer.style.display = 'flex';
   document.body.style.padding = '0';
